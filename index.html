@@ -4,78 +4,202 @@
     <meta charset="UTF-8">
     <title>Casino Royal Rummy 2D</title>
     <style>
-        body { background-color: #121212; color: #e0e0e0; font-family: Arial, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        h1 { margin: 5px 0; font-size: 20px; color: gold; text-align: center; }
-        #game-container { display: flex; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; }
-        #board-section { flex: 3; display: flex; flex-direction: column; align-items: center; }
-        #grid { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(13, 45px); gap: 3px; background: #0b3b17; padding: 10px; border-radius: 8px; border: 3px solid #d4af37; }
-        .cell { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; position: relative; }
-        .cell:hover { background: rgba(255,255,255,0.1); }
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 10px;
+            background-color: #0b0f19;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Coupe tout défilement */
+            display: flex;
+            justify-content: center;
+            box-sizing: border-box;
+        }
         
-        .tile { width: 55px; height: 38px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: grab; user-select: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-        .tile.Rouge { background: #d32f2f; color: white; }
-        .tile.Bleu { background: #1976d2; color: white; }
-        .tile.Jaune { background: #fbc02d; color: black; }
-        .tile.Noir { background: #212121; color: white; border: 1px solid #757575; }
-        .tile.Joker { background: purple; color: white; border: 2px dashed gold; }
+        #game-container { 
+            display: flex; 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 1400px; 
+            height: calc(100vh - 20px); 
+            box-sizing: border-box; 
+        }
+        
+        /* Section de gauche : La table et la main */
+        #board-section { 
+            flex: 3; 
+            display: flex; 
+            flex-direction: column; 
+            background: #151b2b; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #2a344d; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
+            box-sizing: border-box; 
+            height: 100%;
+        }
+        
+        #grid-wrapper {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        #hand-section { margin-top: 15px; width: 100%; background: #1e1e1e; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333; }
-        #hand-tiles { display: flex; gap: 8px; justify-content: center; min-height: 45px; flex-wrap: wrap; }
+        #grid { 
+            display: grid; 
+            grid-template-columns: repeat(8, 62px); 
+            grid-template-rows: 28px repeat(13, 38px); 
+            gap: 3px; 
+            background: #0b3b17; 
+            padding: 8px; 
+            border-radius: 6px; 
+            border: 2px solid #d4af37; 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.6); 
+        }
+        
+        .col-header { background: linear-gradient(to bottom, #1f5c38, #143d24); color: #ffd700; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; border-radius: 3px; border: 1px solid #2a6f42; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        
+        .cell { background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; position: relative; color: rgba(255,255,255,0.25); font-size: 11px; font-weight: bold; transition: background 0.15s; }
+        .cell:hover { background: rgba(255,255,255,0.08); }
+        
+        /* Tuiles */
+        .tile-grille, .tile-main { 
+            background: linear-gradient(135deg, #fdfbf7 0%, #e2dcd5 100%); 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; cursor: grab; user-select: none; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8); 
+        }
+        .tile-grille { width: 48px; height: 34px; border-radius: 4px; font-size: 16px; z-index: 2; }
+        .tile-main { width: 48px; height: 38px; border-radius: 4px; font-size: 17px; transition: transform 0.1s; }
+        .tile-main:hover { transform: translateY(-2px); }
+        
+        .Rouge { color: #d32f2f; }
+        .Bleu { color: #1976d2; }
+        .Jaune { color: #c69214; }
+        .Noir { color: #1a1a1a; }
+        .Joker { background: linear-gradient(135deg, #6a1b9a, #4a148c) !important; color: #ffd700 !important; border: 1px dashed #ffd700; }
 
-        #sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; background: #1e1e1e; padding: 10px; border-radius: 8px; border: 1px solid #333; max-height: 600px; }
-        #chat-box { flex-grow: 1; background: #121212; border: 1px solid #333; border-radius: 4px; padding: 8px; overflow-y: auto; max-height: 400px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-        .chat-msg { padding: 6px 10px; border-radius: 6px; max-width: 85%; }
-        .chat-msg.bot { background: #2d2d2d; color: #ffb74d; align-self: flex-start; }
-        .chat-msg.user { background: #0d47a1; color: white; align-self: flex-end; }
+        #hand-section { 
+            margin-top: 10px; 
+            background: #111522; 
+            padding: 10px; 
+            border-radius: 6px; 
+            text-align: center; 
+            border: 1px solid #2a344d; 
+            box-sizing: border-box; 
+        }
+        #hand-tiles { display: flex; gap: 6px; justify-content: center; min-height: 40px; flex-wrap: wrap; margin-top: 6px; }
 
-        .controls { display: flex; gap: 10px; margin-top: 10px; justify-content: center; }
-        button { padding: 10px 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
-        #btn-validate { background: #2e7d32; color: white; flex: 1; }
-        #btn-draw { background: #1565c0; color: white; flex: 1; }
-        button:hover { opacity: 0.9; }
+        /* Section de droite : Sidebar (Titre, Chat, Boutons) */
+        #sidebar { 
+            flex: 1.2; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #151b2b; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #2a344d; 
+            box-sizing: border-box; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
+            height: 100%; 
+        }
+        
+        .sidebar-header {
+            text-align: center;
+            border-bottom: 1px solid #2a344d;
+            padding-bottom: 12px;
+            margin-bottom: 5px;
+        }
+        .sidebar-header h1 { 
+            margin: 0 0 10px 0; 
+            font-size: 17px; 
+            color: #ffd700; 
+            letter-spacing: 1px; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+            font-family: Georgia, 'Times New Roman', Times, serif; /* Le style d'origine */
+        }
+        
+        #chat-box { 
+            flex-grow: 1; 
+            background: #0b0f19; 
+            border: 1px solid #2a344d; 
+            border-radius: 6px; 
+            padding: 10px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            font-size: 13px; 
+        }
+        .chat-msg { padding: 8px 10px; border-radius: 6px; max-width: 90%; line-height: 1.3; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .chat-msg.bot { background: #1e263d; color: #ffb74d; align-self: flex-start; border: 1px solid #2a344d; }
+        .chat-msg.user { background: #1565c0; color: white; align-self: flex-end; }
+
+        .controls { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; width: 100%; }
+        button.action-btn { padding: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: opacity 0.2s; width: 100%; letter-spacing: 0.5px; }
+        #btn-validate { background: linear-gradient(to bottom, #00c853, #009624); color: black; box-shadow: 0 2px 6px rgba(0,200,83,0.3); }
+        #btn-draw { background: linear-gradient(to bottom, #2962ff, #0d47a1); color: white; box-shadow: 0 2px 6px rgba(41,98,255,0.3); }
+        button.action-btn:hover { opacity: 0.9; }
+        button.action-btn:active { transform: scale(0.98); }
 
         /* Modale Fin de Partie */
-        #modal-fin { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; text-align: center; padding-top: 25vh; }
-        .modal-content { background: #1e1e1e; display: inline-block; padding: 40px; border-radius: 12px; color: white; border: 3px solid gold; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+        #modal-fin { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; text-align: center; padding-top: 25vh; backdrop-filter: blur(5px); }
+        .modal-content { background: #151b2b; display: inline-block; padding: 30px; border-radius: 10px; color: white; border: 2px solid gold; box-shadow: 0 0 25px rgba(255,215,0,0.4); }
     </style>
 </head>
 <body>
 
-    <h1>♣ CASINO ROYAL RUMMY (8 COLONNES) ♠</h1>
-
     <div id="game-container">
+        <!-- Section Gauche : Table et Main -->
         <div id="board-section">
-            <div id="grid"></div>
+            <div id="grid-wrapper">
+                <div id="grid"></div>
+            </div>
             
             <div id="hand-section">
-                <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">TA MAIN (<span id="hand-count">0</span>) | <span id="bot-info"></span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #aaa; padding: 0 5px; font-weight: bold;">
+                    <span id="hand-label">TA MAIN (14)</span>
+                    <span id="bot-info">ADVERSAIRE : 14 TUILES</span>
+                </div>
                 <div id="hand-tiles"></div>
-            </div>
-
-            <div class="controls" style="width: 100%; max-width: 500px;">
-                <button id="btn-validate" onclick="validerFinTour()">VALIDER MON COUP</button>
-                <button id="btn-draw" onclick="pigerTuile()">PIGER</button>
             </div>
         </div>
 
+        <!-- Section Droite : Contrôles, Chat et Boutons -->
         <div id="sidebar">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; font-weight: bold;">Chum (IA)</span>
-                <select id="select-mode" onchange="changerPersonnalite()" style="background: #333; color: white; border: 1px solid #555; padding: 3px; border-radius: 4px;">
-                    <option value="amical">Amical</option>
-                    <option value="agressif">Agressif</option>
-                    <option value="sarcastique">Sarcastique</option>
-                    <option value="introverti">Introverti</option>
-                    <option value="irritable">Irritable</option>
-                    <option value="perplexe">Perplexe</option>
-                </select>
+            <div class="sidebar-header">
+                <h1>♠ CASINO ROYAL RUMMY (8 COLONNES) ♣</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <select id="select-mode" onchange="changerPersonnalite()" style="background: #0b0f19; color: white; border: 1px solid #2a344d; padding: 4px; border-radius: 4px; font-size: 12px; flex-grow: 1; margin-right: 10px;">
+                        <option value="amical">Amical</option>
+                        <option value="agressif">Agressif</option>
+                        <option value="sarcastique">Sarcastique</option>
+                        <option value="introverti">Introverti</option>
+                        <option value="irritable">Irritable</option>
+                        <option value="perplexe">Perplexe</option>
+                    </select>
+                    <button id="btn-audio" onclick="toggleMusique()" style="background: #2a344d; color: #aaa; border: none; padding: 5px 10px; font-size: 11px; border-radius: 4px; cursor: pointer;">🎵 Musique: OFF</button>
+                </div>
             </div>
             
             <div id="chat-box"></div>
             
             <div style="display: flex; gap: 5px;">
-                <input type="text" id="chat-input" placeholder="Parle à ton adversaire..." style="flex-grow: 1; padding: 8px; background: #121212; border: 1px solid #444; color: white; border-radius: 4px;" onkeypress="if(event.key==='Enter') envoyerMessage()">
-                <button onclick="envoyerMessage()" style="background: #d4af37; color: black; padding: 8px 12px;">ENVOYER</button>
+                <input type="text" id="chat-input" placeholder="Parle à ton adversaire..." style="flex-grow: 1; padding: 9px; background: #0b0f19; border: 1px solid #2a344d; color: white; border-radius: 4px; font-size: 13px;" onkeypress="if(event.key==='Enter') envoyerMessage()">
+                <button onclick="envoyerMessage()" style="background: #d4af37; color: black; border: none; padding: 9px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">ENVOYER</button>
+            </div>
+
+            <div class="controls">
+                <button id="btn-validate" class="action-btn" onclick="validerFinTour()">✓ VALIDER MON COUP</button>
+                <button id="btn-draw" class="action-btn" onclick="pigerTuile()">PIGER</button>
+            </div>
+
+            <div style="font-size: 11px; color: #888; border-top: 1px solid #2a344d; padding-top: 8px; line-height: 1.4; text-align: center;">
+                • Max 8 colonnes (2 par couleur distantes de 2 colonnes).<br>
+                • Glisse tes tuiles en bas pour les réorganiser.
             </div>
         </div>
     </div>
@@ -83,11 +207,11 @@
     <!-- Modale de fin de partie -->
     <div id="modal-fin">
         <div class="modal-content">
-            <h2 style="color: gold; margin-top: 0;">Fin de la Partie</h2>
-            <p id="texte-fin-message" style="font-size: 18px; margin: 20px 0;"></p>
+            <h2 style="color: gold; margin-top: 0; font-size: 24px;">Fin de la Partie</h2>
+            <p id="texte-fin-message" style="font-size: 18px; margin: 25px 0;"></p>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
-                <button onclick="rejouerPartie()" style="background: #2e7d32; color: white; padding: 12px 25px; font-size: 16px;">Rejouer</button>
-                <button onclick="terminerPartie()" style="background: #c62828; color: white; padding: 12px 25px; font-size: 16px;">Terminer la partie</button>
+                <button onclick="rejouerPartie()" style="background: #2e7d32; border: none; color: white; padding: 12px 25px; font-size: 15px; border-radius: 6px; cursor: pointer;">Rejouer</button>
+                <button onclick="terminerPartie()" style="background: #c62828; border: none; color: white; padding: 12px 25px; font-size: 15px; border-radius: 6px; cursor: pointer;">Fermer</button>
             </div>
         </div>
     </div>
@@ -97,6 +221,7 @@
     <script>
         let etatJeu = null;
         let dernierAudioIdx = -1;
+        let musiqueActive = false;
 
         async function chargerEtat() {
             try {
@@ -109,27 +234,35 @@
                     document.getElementById('texte-fin-message').innerText = etatJeu.message_fin;
                 }
             } catch (e) {
-                console.error("Erreur de chargement de l'état", e);
+                console.error("Erreur de chargement", e);
             }
         }
 
         function afficherJeu() {
-            // Grille
             let gridEl = document.getElementById('grid');
             gridEl.innerHTML = '';
+            
+            for (let c = 1; c <= 8; c++) {
+                let colH = document.createElement('div');
+                colH.className = 'col-header';
+                colH.innerText = `C${c}`;
+                gridEl.appendChild(colH);
+            }
+
             for (let r = 0; r < 13; r++) {
+                let valRepere = 13 - r;
                 for (let c = 0; c < 8; c++) {
                     let cell = document.createElement('div');
                     cell.className = 'cell';
-                    cell.dataset.r = r;
-                    cell.dataset.c = c;
                     
                     let tile = etatJeu.grille[r][c];
                     if (tile) {
                         let tDiv = document.createElement('div');
-                        tDiv.className = `tile ${tile.joker ? 'Joker' : tile.couleur}`;
+                        tDiv.className = `tile-grille ${tile.joker ? 'Joker' : tile.couleur}`;
                         tDiv.innerText = tile.joker ? '★' : tile.valeur;
                         cell.appendChild(tDiv);
+                    } else {
+                        cell.innerText = valRepere;
                     }
 
                     cell.ondragover = (e) => e.preventDefault();
@@ -138,25 +271,34 @@
                 }
             }
 
-            // Main du joueur
             let handEl = document.getElementById('hand-tiles');
             handEl.innerHTML = '';
-            document.getElementById('hand-count').innerText = etatJeu.main.length;
+            document.getElementById('hand-label').innerText = `TA MAIN (${etatJeu.main.length})`;
             document.getElementById('bot-info').innerText = `ADVERSAIRE : ${etatJeu.bot_count} TUILES`;
             document.getElementById('select-mode').value = etatJeu.mode;
 
             etatJeu.main.forEach((tile, index) => {
                 let tDiv = document.createElement('div');
-                tDiv.className = `tile ${tile.joker ? 'Joker' : tile.couleur}`;
+                tDiv.className = `tile-main ${tile.joker ? 'Joker' : tile.couleur}`;
                 tDiv.innerText = tile.joker ? '★' : tile.valeur;
                 tDiv.draggable = true;
                 tDiv.ondragstart = (e) => {
                     e.dataTransfer.setData('text/plain', JSON.stringify({type: 'main', index: index}));
                 };
+                
+                tDiv.ondragover = (e) => e.preventDefault();
+                tDiv.ondrop = async (e) => {
+                    e.stopPropagation();
+                    let data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data.type === 'main' && data.index !== index) {
+                        await fetch(`/api/swap_hand?idx1=${data.index}&idx2=${index}`);
+                        chargerEtat();
+                    }
+                };
+
                 handEl.appendChild(tDiv);
             });
 
-            // Chat
             let chatBox = document.getElementById('chat-box');
             let besoinScroll = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
             chatBox.innerHTML = '';
@@ -166,7 +308,6 @@
                 div.innerText = (msg.role === 'bot' ? 'Chum: ' : 'Moi: ') + msg.texte;
                 chatBox.appendChild(div);
 
-                // Jouer l'audio du dernier message du bot s'il est nouveau
                 if (msg.role === 'bot' && idx > dernierAudioIdx && !msg.texte.startsWith("*")) {
                     dernierAudioIdx = idx;
                     jouerAudio();
@@ -178,13 +319,24 @@
         function jouerAudio() {
             let audio = document.getElementById('audio-player');
             audio.src = '/reponse.mp3?t=' + Date.now();
-            audio.play().catch(e => console.log("Lecture audio bloquée par le fureteur", e));
+            audio.play().catch(e => console.log("Audio bloqué", e));
+        }
+
+        function toggleMusique() {
+            musiqueActive = !musiqueActive;
+            let btn = document.getElementById('btn-audio');
+            if (musiqueActive) {
+                btn.innerText = "🎵 Musique: ON";
+                btn.style.color = "#4caf50";
+            } else {
+                btn.innerText = "🎵 Musique: OFF";
+                btn.style.color = "#aaa";
+            }
         }
 
         async function gererDrop(e, targetR, targetC) {
             e.preventDefault();
             let data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            
             if (data.type === 'main') {
                 await fetch(`/api/place?idx=${data.index}&r=${targetR}&c=${targetC}`);
             }
@@ -228,7 +380,6 @@
             window.close();
         }
 
-        // Charger l'état initial au démarrage
         chargerEtat();
     </script>
 </body>
