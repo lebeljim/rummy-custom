@@ -1,344 +1,235 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Rummy Casino Royal 2D</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --casino-bg: #090c10;
-    --felt-green: radial-gradient(circle at 50% 40%, #1e5631 0%, #11381e 65%, #0a2313 100%);
-    --gold-grad: linear-gradient(135deg, #ffe082 0%, #d4af37 50%, #8d6e1f 100%);
-    --red-tile: #d32f2f;
-    --blue-tile: #0288d1;
-    --yellow-tile: #f57c00;
-    --black-tile: #111111;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    width: 100vw; height: 100vh; margin: 0; padding: 6px 12px;
-    overflow: hidden; font-family: 'Montserrat', sans-serif;
-    background: radial-gradient(circle at center, #151d28 0%, var(--casino-bg) 100%);
-    color: #f5f5f5; user-select: none; display: flex; flex-direction: column;
-  }
-  .header-panel {
-    display: flex; justify-content: space-between; align-items: center;
-    width: 100%; margin: 0 auto 4px auto; padding: 4px 15px;
-    background: linear-gradient(180deg, #1b2432 0%, #0d131a 100%);
-    border-radius: 8px; border: 1.5px solid #d4af37; height: 36px; flex-shrink: 0;
-  }
-  .title {
-    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
-    background: var(--gold-grad); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; letter-spacing: 1.5px;
-  }
-  .controls-top { display: flex; gap: 10px; align-items: center; font-size: 12px; }
-  .layout-main { display: flex; gap: 12px; flex: 1; min-height: 0; }
-  .left-container { display: flex; flex-direction: column; flex: 1; gap: 6px; min-width: 0; height: 100%; }
-  .table-felt {
-    background: var(--felt-green); padding: 6px 10px; border-radius: 10px;
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 6px 20px rgba(0,0,0,0.8);
-    border: 3px solid #4a2c11; outline: 1.5px solid #d4af37;
-    display: flex; flex-direction: column; flex: 1; min-height: 0;
-  }
-  .col-headers { display: grid; grid-template-columns: repeat(8, 1fr); grid-gap: 4px; margin-bottom: 2px; }
-  .col-header-btn {
-    background: linear-gradient(180deg, #d4af37 0%, #8d6e1f 100%); color: #111;
-    font-size: 10px; font-weight: 900; text-align: center; padding: 2px 0;
-    border-radius: 4px; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  }
-  .col-header-btn:active { cursor: grabbing; }
-  .grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(13, 1fr); grid-gap: 2px; flex: 1; min-height: 0; }
-  .cell {
-    background: rgba(0, 0, 0, 0.25); border-radius: 4px; display: flex;
-    align-items: center; justify-content: center; position: relative;
-    border: 1px dashed rgba(255, 224, 130, 0.2); min-height: 0;
-  }
-  .cell.dragover { background: rgba(0, 230, 118, 0.3); border-color: #00e676; }
-  .cell::before {
-    content: attr(data-rank); position: absolute; font-size: 11px; font-weight: 900;
-    color: rgba(255, 255, 255, 0.08); pointer-events: none;
-  }
-  .rack-container {
-    background: linear-gradient(180deg, #1b2432 0%, #0d131a 100%);
-    border: 1.5px solid #2b394e; border-radius: 8px; padding: 4px 8px;
-    height: 95px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .rack-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #ffe082; }
-  .rack {
-    display: flex; flex-wrap: wrap; gap: 4px; background: #090d12; padding: 4px;
-    border-radius: 6px; height: 68px; overflow-y: auto; border: 1px solid #1c2736; align-content: flex-start;
-  }
-  .rack.dragover { background: rgba(0, 230, 118, 0.15); border-color: #00e676; }
-  .tuile {
-    width: 38px; height: 94%; max-height: 38px;
-    background: linear-gradient(150deg, #ffffff 0%, #f7f3ec 50%, #dfd9cb 100%);
-    border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 1px #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 900;
-    font-size: 17px; cursor: grab; position: relative; border: 1px solid #c8c0b0; transition: transform 0.08s;
-  }
-  .tuile:active { cursor: grabbing; }
-  .tuile::after {
-    content: ''; width: 8px; height: 8px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0) 70%);
-    position: absolute; bottom: 2px;
-  }
-  .tuile:hover { transform: translateY(-2px); }
-  .selected { outline: 3px solid #00e676; transform: scale(1.06) translateY(-2px); z-index: 10; }
-  .Rouge { color: var(--red-tile); } .Bleu { color: var(--blue-tile); }
-  .Jaune { color: var(--yellow-tile); } .Noir { color: var(--black-tile); }
-  .Joker { color: #8e24aa; font-size: 18px; }
-  .right-sidebar {
-    width: 290px; background: linear-gradient(180deg, #1b2432 0%, #0d131a 100%);
-    padding: 10px; border-radius: 10px; border: 1.5px solid #2b394e;
-    display: flex; flex-direction: column; justify-content: space-between; height: 100%; flex-shrink: 0;
-  }
-  .chat-panel {
-    display: flex; flex-direction: column; flex: 1; min-height: 0; background: #090d12;
-    border-radius: 6px; border: 1px solid #1c2736; padding: 6px; gap: 6px;
-  }
-  .chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px; padding-right: 4px; }
-  .msg { padding: 5px 8px; border-radius: 6px; line-height: 1.35; max-width: 90%; word-break: break-word; }
-  .msg-bot { background: #1c2736; color: #ffe082; align-self: flex-start; border-left: 3px solid #d4af37; }
-  .msg-user { background: #004d40; color: #e0f2f1; align-self: flex-end; }
-  .chat-input-row { display: flex; gap: 4px; height: 28px; }
-  .chat-input { flex: 1; background: #151d28; border: 1px solid #2b394e; color: #fff; border-radius: 4px; padding: 0 8px; font-size: 11px; font-family: inherit; }
-  .chat-input:focus { outline: 1px solid #d4af37; }
-  .chat-send-btn { background: #d4af37; color: #111; border: none; border-radius: 4px; font-size: 10px; font-weight: 900; padding: 0 10px; cursor: pointer; }
-  .actions-box { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
-  button.action-btn { padding: 9px; border: none; border-radius: 5px; font-family: 'Montserrat', sans-serif; font-weight: 900; cursor: pointer; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .btn-valider { background: linear-gradient(180deg, #00e676 0%, #00a152 100%); color: #000; }
-  .btn-piger { background: linear-gradient(180deg, #3d5afe 0%, #1a237e 100%); color: #fff; }
-  .btn-music { background: #263238; color: #ffe082; border: 1px solid #d4af37; padding: 4px 8px; font-size: 11px; }
-  .rules-text { font-size: 9.5px; color: #90a4ae; line-height: 1.25; background: #090d12; padding: 5px; border-radius: 5px; margin-top: 5px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Casino Royal Rummy 2D</title>
+    <style>
+        body { background-color: #121212; color: #e0e0e0; font-family: Arial, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        h1 { margin: 5px 0; font-size: 20px; color: gold; text-align: center; }
+        #game-container { display: flex; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; }
+        #board-section { flex: 3; display: flex; flex-direction: column; align-items: center; }
+        #grid { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(13, 45px); gap: 3px; background: #0b3b17; padding: 10px; border-radius: 8px; border: 3px solid #d4af37; }
+        .cell { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; position: relative; }
+        .cell:hover { background: rgba(255,255,255,0.1); }
+        
+        .tile { width: 55px; height: 38px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: grab; user-select: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+        .tile.Rouge { background: #d32f2f; color: white; }
+        .tile.Bleu { background: #1976d2; color: white; }
+        .tile.Jaune { background: #fbc02d; color: black; }
+        .tile.Noir { background: #212121; color: white; border: 1px solid #757575; }
+        .tile.Joker { background: purple; color: white; border: 2px dashed gold; }
+
+        #hand-section { margin-top: 15px; width: 100%; background: #1e1e1e; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333; }
+        #hand-tiles { display: flex; gap: 8px; justify-content: center; min-height: 45px; flex-wrap: wrap; }
+
+        #sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; background: #1e1e1e; padding: 10px; border-radius: 8px; border: 1px solid #333; max-height: 600px; }
+        #chat-box { flex-grow: 1; background: #121212; border: 1px solid #333; border-radius: 4px; padding: 8px; overflow-y: auto; max-height: 400px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+        .chat-msg { padding: 6px 10px; border-radius: 6px; max-width: 85%; }
+        .chat-msg.bot { background: #2d2d2d; color: #ffb74d; align-self: flex-start; }
+        .chat-msg.user { background: #0d47a1; color: white; align-self: flex-end; }
+
+        .controls { display: flex; gap: 10px; margin-top: 10px; justify-content: center; }
+        button { padding: 10px 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
+        #btn-validate { background: #2e7d32; color: white; flex: 1; }
+        #btn-draw { background: #1565c0; color: white; flex: 1; }
+        button:hover { opacity: 0.9; }
+
+        /* Modale Fin de Partie */
+        #modal-fin { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; text-align: center; padding-top: 25vh; }
+        .modal-content { background: #1e1e1e; display: inline-block; padding: 40px; border-radius: 12px; color: white; border: 3px solid gold; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+    </style>
 </head>
 <body>
-<div class="header-panel">
-  <div class="title">♣ CASINO ROYAL RUMMY (8 COLONNES) ♠</div>
-  <div class="controls-top">
-    <button class="btn-music" onclick="toggleMusic()" id="btn-music">🎵 Musique: OFF</button>
-  </div>
-</div>
-<div class="layout-main">
-  <div class="left-container">
-    <div class="table-felt">
-      <div class="col-headers" id="col-headers"></div>
-      <div class="grid" id="grid"></div>
+
+    <h1>♣ CASINO ROYAL RUMMY (8 COLONNES) ♠</h1>
+
+    <div id="game-container">
+        <div id="board-section">
+            <div id="grid"></div>
+            
+            <div id="hand-section">
+                <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">TA MAIN (<span id="hand-count">0</span>) | <span id="bot-info"></span></div>
+                <div id="hand-tiles"></div>
+            </div>
+
+            <div class="controls" style="width: 100%; max-width: 500px;">
+                <button id="btn-validate" onclick="validerFinTour()">VALIDER MON COUP</button>
+                <button id="btn-draw" onclick="pigerTuile()">PIGER</button>
+            </div>
+        </div>
+
+        <div id="sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; font-weight: bold;">Chum (IA)</span>
+                <select id="select-mode" onchange="changerPersonnalite()" style="background: #333; color: white; border: 1px solid #555; padding: 3px; border-radius: 4px;">
+                    <option value="amical">Amical</option>
+                    <option value="agressif">Agressif</option>
+                    <option value="sarcastique">Sarcastique</option>
+                    <option value="introverti">Introverti</option>
+                    <option value="irritable">Irritable</option>
+                    <option value="perplexe">Perplexe</option>
+                </select>
+            </div>
+            
+            <div id="chat-box"></div>
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="chat-input" placeholder="Parle à ton adversaire..." style="flex-grow: 1; padding: 8px; background: #121212; border: 1px solid #444; color: white; border-radius: 4px;" onkeypress="if(event.key==='Enter') envoyerMessage()">
+                <button onclick="envoyerMessage()" style="background: #d4af37; color: black; padding: 8px 12px;">ENVOYER</button>
+            </div>
+        </div>
     </div>
-    <div class="rack-container">
-      <div class="rack-header">
-        <span>TA MAIN (<span id="hand-count"></span>)</span>
-        <span style="color:#90a4ae;">ADVERSAIRE : <span id="bot-count"></span> TUILES</span>
-      </div>
-      <div class="rack" id="rack" ondragover="handleRackDragOver(event)" ondragleave="handleRackDragLeave(event)" ondrop="handleRackDrop(event)"></div>
+
+    <!-- Modale de fin de partie -->
+    <div id="modal-fin">
+        <div class="modal-content">
+            <h2 style="color: gold; margin-top: 0;">Fin de la Partie</h2>
+            <p id="texte-fin-message" style="font-size: 18px; margin: 20px 0;"></p>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                <button onclick="rejouerPartie()" style="background: #2e7d32; color: white; padding: 12px 25px; font-size: 16px;">Rejouer</button>
+                <button onclick="terminerPartie()" style="background: #c62828; color: white; padding: 12px 25px; font-size: 16px;">Terminer la partie</button>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="right-sidebar">
-    <div class="chat-panel">
-      <div class="chat-history" id="chat-history"></div>
-      <div class="chat-input-row">
-        <input type="text" id="chat-input" class="chat-input" placeholder="Parle à ton adversaire..." onkeydown="if(event.key==='Enter') envoyerMessageChat()">
-        <button class="chat-send-btn" onclick="envoyerMessageChat()">ENVOYER</button>
-      </div>
-    </div>
-    <div class="actions-box">
-      <button class="action-btn btn-valider" onclick="finirTour()">✔ Valider mon coup</button>
-      <button class="action-btn btn-piger" onclick="piger()">Piger</button>
-    </div>
-    <div class="rules-text">
-      • <b>Colonnes :</b> Max 8 (2 par couleur séparées d'au moins 2 colonnes).<br>
-      • <b>Réorganiser la main :</b> Glisse tes tuiles directement entre elles en bas.
-    </div>
-  </div>
-</div>
 
-<script>
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let musicPlaying = false; let musicInterval = null;
-let draggedItem = null; let draggedCol = null; let selection = null;
-let dernierMsgIndex = 0;
+    <audio id="audio-player" style="display:none;"></audio>
 
-function unlockAudio() {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-document.body.addEventListener('click', unlockAudio);
+    <script>
+        let etatJeu = null;
+        let dernierAudioIdx = -1;
 
-function startMusic() {
-  if (musicPlaying) return;
-  musicPlaying = true; document.getElementById('btn-music').innerText = "🎵 Musique: ON";
-  const notes = [220, 261.63, 329.63, 392, 440, 523.25];
-  musicInterval = setInterval(() => {
-    if (!musicPlaying) return;
-    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-    const note = notes[Math.floor(Math.random() * notes.length)];
-    osc.type = 'sine'; osc.frequency.setValueAtTime(note, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.5);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 2.5);
-  }, 1200);
-}
-function stopMusic() { musicPlaying = false; clearInterval(musicInterval); document.getElementById('btn-music').innerText = "🎵 Musique: OFF"; }
-function toggleMusic() { unlockAudio(); if (musicPlaying) stopMusic(); else startMusic(); }
+        async function chargerEtat() {
+            try {
+                let res = await fetch('/api/state');
+                etatJeu = await res.json();
+                afficherJeu();
+                
+                if (etatJeu.partie_terminee) {
+                    document.getElementById('modal-fin').style.display = 'block';
+                    document.getElementById('texte-fin-message').innerText = etatJeu.message_fin;
+                }
+            } catch (e) {
+                console.error("Erreur de chargement de l'état", e);
+            }
+        }
 
-function playSound(type) {
-  unlockAudio();
-  const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  if (type === 'click') {
-    osc.frequency.setValueAtTime(500, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.06, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.03);
-  } else if (type === 'place') {
-    osc.frequency.setValueAtTime(340, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.06);
-  } else if (type === 'draw') {
-    osc.frequency.setValueAtTime(240, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(580, audioCtx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-  }
-}
+        function afficherJeu() {
+            // Grille
+            let gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+            for (let r = 0; r < 13; r++) {
+                for (let c = 0; c < 8; c++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    
+                    let tile = etatJeu.grille[r][c];
+                    if (tile) {
+                        let tDiv = document.createElement('div');
+                        tDiv.className = `tile ${tile.joker ? 'Joker' : tile.couleur}`;
+                        tDiv.innerText = tile.joker ? '★' : tile.valeur;
+                        cell.appendChild(tDiv);
+                    }
 
-// Fonction pour lire le MP3 généré par l'IA
-function jouerVoixIA() {
-  // Le paramètre getTime force le navigateur à ne pas utiliser le cache pour le MP3
-  const audio = new Audio('/reponse.mp3?t=' + new Date().getTime());
-  audio.play().catch(e => console.log("Erreur lecture audio:", e));
-}
+                    cell.ondragover = (e) => e.preventDefault();
+                    cell.ondrop = (e) => gererDrop(e, r, c);
+                    gridEl.appendChild(cell);
+                }
+            }
 
-async function refresh() {
-  const res = await fetch('/api/state');
-  const data = await res.json();
-  
-  document.getElementById('hand-count').innerText = data.main.length;
-  document.getElementById('bot-count').innerText = data.bot_count;
+            // Main du joueur
+            let handEl = document.getElementById('hand-tiles');
+            handEl.innerHTML = '';
+            document.getElementById('hand-count').innerText = etatJeu.main.length;
+            document.getElementById('bot-info').innerText = `ADVERSAIRE : ${etatJeu.bot_count} TUILES`;
+            document.getElementById('select-mode').value = etatJeu.mode;
 
-  const chatHistEl = document.getElementById('chat-history');
-  chatHistEl.innerHTML = '';
-  data.chat.forEach((msg, idx) => {
-    const d = document.createElement('div');
-    d.className = `msg ${msg.role === 'bot' ? 'msg-bot' : 'msg-user'}`;
-    d.innerText = msg.role === 'bot' ? `Chum: ${msg.texte}` : `Toi: ${msg.texte}`;
-    chatHistEl.appendChild(d);
-  });
+            etatJeu.main.forEach((tile, index) => {
+                let tDiv = document.createElement('div');
+                tDiv.className = `tile ${tile.joker ? 'Joker' : tile.couleur}`;
+                tDiv.innerText = tile.joker ? '★' : tile.valeur;
+                tDiv.draggable = true;
+                tDiv.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({type: 'main', index: index}));
+                };
+                handEl.appendChild(tDiv);
+            });
 
-  if (data.chat.length > dernierMsgIndex) {
-    const dernierMsg = data.chat[data.chat.length - 1];
-    if (dernierMsg.role === 'bot') {
-        jouerVoixIA(); // Lance le MP3 ultra-réaliste
-    }
-    chatHistEl.scrollTop = chatHistEl.scrollHeight;
-    dernierMsgIndex = data.chat.length;
-  }
+            // Chat
+            let chatBox = document.getElementById('chat-box');
+            let besoinScroll = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
+            chatBox.innerHTML = '';
+            etatJeu.chat.forEach((msg, idx) => {
+                let div = document.createElement('div');
+                div.className = `chat-msg ${msg.role}`;
+                div.innerText = (msg.role === 'bot' ? 'Chum: ' : 'Moi: ') + msg.texte;
+                chatBox.appendChild(div);
 
-  const headersEl = document.getElementById('col-headers');
-  headersEl.innerHTML = '';
-  for(let c=0; c<8; c++) {
-    const h = document.createElement('div'); h.className = 'col-header-btn'; h.innerText = `C${c+1}`; h.draggable = true;
-    h.ondragstart = () => { draggedCol = c; }; h.ondragover = (e) => e.preventDefault();
-    h.ondrop = async (e) => {
-      e.preventDefault();
-      if(draggedCol !== null && draggedCol !== c) {
-        playSound('place'); await fetch(`/api/move_column?c1=${draggedCol}&c2=${c}`);
-        draggedCol = null; refresh();
-      }
-    };
-    headersEl.appendChild(h);
-  }
+                // Jouer l'audio du dernier message du bot s'il est nouveau
+                if (msg.role === 'bot' && idx > dernierAudioIdx && !msg.texte.startsWith("*")) {
+                    dernierAudioIdx = idx;
+                    jouerAudio();
+                }
+            });
+            if (besoinScroll) chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
-  const gridEl = document.getElementById('grid'); gridEl.innerHTML = '';
-  for(let r=0; r<13; r++) {
-    for(let c=0; c<8; c++) {
-      const cell = document.createElement('div'); cell.className = 'cell'; cell.setAttribute('data-rank', 13 - r);
-      const t = data.grille[r][c];
-      cell.ondragover = (e) => { e.preventDefault(); cell.classList.add('dragover'); };
-      cell.ondragleave = () => cell.classList.remove('dragover');
-      cell.ondrop = (e) => handleCellDrop(e, r, c);
-      if(t) {
-        const tileEl = createTileEl(t); tileEl.draggable = true;
-        tileEl.ondragstart = () => { draggedItem = { source: 'grid', r: r, c: c }; };
-        if(selection && selection.type === 'grid' && selection.r === r && selection.c === c) tileEl.classList.add('selected');
-        tileEl.onclick = () => selectGridTile(r, c); cell.appendChild(tileEl);
-      } else { cell.onclick = () => clickEmptyCell(r, c); }
-      gridEl.appendChild(cell);
-    }
-  }
+        function jouerAudio() {
+            let audio = document.getElementById('audio-player');
+            audio.src = '/reponse.mp3?t=' + Date.now();
+            audio.play().catch(e => console.log("Lecture audio bloquée par le fureteur", e));
+        }
 
-  const rackEl = document.getElementById('rack'); rackEl.innerHTML = '';
-  data.main.forEach((t, idx) => {
-    const tileEl = createTileEl(t); tileEl.draggable = true;
-    tileEl.ondragstart = (e) => { e.stopPropagation(); draggedItem = { source: 'hand', idx: idx }; };
-    tileEl.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); };
-    tileEl.ondrop = async (e) => {
-      e.preventDefault(); e.stopPropagation();
-      if (draggedItem && draggedItem.source === 'hand' && draggedItem.idx !== idx) {
-        playSound('click'); await fetch(`/api/swap_hand?idx1=${draggedItem.idx}&idx2=${idx}`);
-        draggedItem = null; refresh();
-      }
-    };
-    if(selection && selection.type === 'hand' && selection.idx === idx) tileEl.classList.add('selected');
-    tileEl.onclick = () => selectHandTile(idx); rackEl.appendChild(tileEl);
-  });
-}
+        async function gererDrop(e, targetR, targetC) {
+            e.preventDefault();
+            let data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            
+            if (data.type === 'main') {
+                await fetch(`/api/place?idx=${data.index}&r=${targetR}&c=${targetC}`);
+            }
+            chargerEtat();
+        }
 
-function createTileEl(t) {
-  const d = document.createElement('div'); d.className = `tuile ${t.couleur}`;
-  d.innerText = t.joker ? '🃏' : t.valeur; return d;
-}
+        async function pigerTuile() {
+            await fetch('/api/draw');
+            chargerEtat();
+        }
 
-async function handleCellDrop(e, r, c) {
-  e.preventDefault(); e.currentTarget.classList.remove('dragover'); if (!draggedItem) return;
-  playSound('place');
-  if (draggedItem.source === 'hand') await fetch(`/api/place?idx=${draggedItem.idx}&r=${r}&c=${c}`);
-  else if (draggedItem.source === 'grid') await fetch(`/api/move?r1=${draggedItem.r}&c1=${draggedItem.c}&r2=${r}&c2=${c}`);
-  draggedItem = null; selection = null; refresh();
-}
+        async function validerFinTour() {
+            await fetch('/api/end_turn');
+            chargerEtat();
+        }
 
-function handleRackDragOver(e) { e.preventDefault(); document.getElementById('rack').classList.add('dragover'); }
-function handleRackDragLeave(e) { document.getElementById('rack').classList.remove('dragover'); }
-async function handleRackDrop(e) {
-  e.preventDefault(); document.getElementById('rack').classList.remove('dragover'); if (!draggedItem) return;
-  if (draggedItem.source === 'grid') { playSound('place'); await fetch(`/api/return?r=${draggedItem.r}&c=${draggedItem.c}`); }
-  draggedItem = null; selection = null; refresh();
-}
+        async function envoyerMessage() {
+            let input = document.getElementById('chat-input');
+            let txt = input.value.trim();
+            if (!txt) return;
+            input.value = '';
+            await fetch(`/api/chat_user?msg=${encodeURIComponent(txt)}`);
+            chargerEtat();
+        }
 
-function selectHandTile(idx) {
-  playSound('click');
-  if(!selection) selection = { type: 'hand', idx: idx };
-  else if(selection.type === 'hand') { fetch(`/api/swap_hand?idx1=${selection.idx}&idx2=${idx}`).then(() => { selection = null; refresh(); }); return; }
-  else selection = { type: 'hand', idx: idx };
-  refresh();
-}
+        async function changerPersonnalite() {
+            let mode = document.getElementById('select-mode').value;
+            await fetch(`/api/set_personality?mode=${mode}`);
+            chargerEtat();
+        }
 
-function selectGridTile(r, c) {
-  playSound('click');
-  if(selection && selection.type === 'grid' && selection.r === r && selection.c === c) selection = null;
-  else selection = { type: 'grid', r: r, c: c };
-  refresh();
-}
+        async function rejouerPartie() {
+            await fetch('/api/restart');
+            document.getElementById('modal-fin').style.display = 'none';
+            dernierAudioIdx = -1;
+            chargerEtat();
+        }
 
-async function clickEmptyCell(r, c) {
-  if(!selection) return; playSound('place');
-  if(selection.type === 'hand') await fetch(`/api/place?idx=${selection.idx}&r=${r}&c=${c}`);
-  else if(selection.type === 'grid') await fetch(`/api/move?r1=${selection.r}&c1=${selection.c}&r2=${r}&c2=${c}`);
-  selection = null; refresh();
-}
+        function terminerPartie() {
+            alert("Merci d'avoir joué ! Vous pouvez fermer cette fenêtre.");
+            window.close();
+        }
 
-async function piger() { playSound('draw'); selection = null; await fetch('/api/draw'); refresh(); }
-async function finirTour() { playSound('click'); selection = null; await fetch('/api/end_turn'); refresh(); }
-
-async function envoyerMessageChat() {
-  unlockAudio();
-  const inp = document.getElementById('chat-input'); const txt = inp.value.trim();
-  if(!txt) return; inp.value = '';
-  // Montre immédiatement ton message
-  await fetch(`/api/chat_user?msg=${encodeURIComponent(txt)}`); 
-  refresh();
-}
-
-refresh();
-</script>
+        // Charger l'état initial au démarrage
+        chargerEtat();
+    </script>
 </body>
 </html>
